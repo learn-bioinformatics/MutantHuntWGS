@@ -200,4 +200,8 @@ Contains a folder for each mutant within which you will find an XLS and VCF file
 
 
 
+### Dependencies
 
+You can download SIFT4G_Annotator.jar, thus:
+
+    wget https://github.com/pauline-ng/SIFT4G_Annotator/raw/master/SIFT4G_Annotator.jar
