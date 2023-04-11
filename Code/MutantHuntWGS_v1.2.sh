@@ -105,8 +105,9 @@ then
 	mkdir "$OUTPUT_FILE"/VCF
 	mkdir "$OUTPUT_FILE"/VCFtools_Output
 	mkdir "$OUTPUT_FILE"/SNPeff_Output
-	mkdir "$OUTPUT_FILE"/SIFT_Output
-
+	#mkdir "$OUTPUT_FILE"/SIFT_Output
+    bam_out_dir="$OUTPUT_FILE/BAM"
+    bcf_out_dir="$OUTPUT_FILE"/BCF
 fi
 
 
@@ -150,10 +151,9 @@ then
 			NAME_PREFIX=`echo "$FASTQ_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
             echo "Aligning $NAME_PREFIX"
-            bam_out_dir="$OUTPUT_FILE/BAM"
 			bowtie2 --no-unal \
 				-q \
-				-k 2 \
+				-k 1 \
 				-p "$CPUS" \
 				-x "$GENOME" \
 				-1 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R1.fastq.gz -2 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R2.fastq.gz \
@@ -223,18 +223,31 @@ then
 
 		#The first step is to use the SAMtools mpileup command to calculate the genotype likelihoods supported by the aligned reads in our sample
 	
-
-		samtools mpileup -g -f "$GENOME_FASTA" "$BAM_FILE" -o "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf &> /dev/null
+        echo "Running pileup on $NAME_PREFIX"
+		bcftools mpileup \
+            --output-type b \
+            --fasta-ref "$GENOME_FASTA" \
+            --output $bcf_out_dir/"$NAME_PREFIX"_variants.bcf \
+            "$BAM_FILE" \
+            &> $bcf_out_dir/"$NAME_PREFIX"_mpileup.log # Capture standard error in a log
 		
-		#-g: directs SAMtools to output genotype likelihoods in the binary call format (BCF). This is a compressed binary format.
-		#-f: directs SAMtools to use the specified reference genome. A reference genome must be specified.
+		#--output-type b : directs SAMtools to output genotype likelihoods in the binary call format (BCF). This is a compressed binary format.
+		#A reference genome in FASTA format must be specified.
 
 		#The second step is to use bcftools:
 		#The bcftools call command uses the genotype likelihoods generated from the previous step to call SNPs and indels, and outputs the all identified variants in the variant call format (VFC), the file format created for the 1000 Genomes Project, and now widely used to represent genomic variants.
 
-		echo "$BAM_FILE" | awk '{print $1 "\t" "M"}' > "$OUTPUT_FILE"/BCF/sample_file.txt
+		echo "$BAM_FILE" | awk '{print $1 "\t" "M"}' > $bcf_out_dir/sample_file.txt
 
-		bcftools call -c -v --samples-file "$OUTPUT_FILE"/BCF/sample_file.txt --ploidy-file "$PLOIDY_FILE" "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf
+        echo "Running bcftools on $NAME_PREFIX"
+		bcftools call -c -v --samples-file $bcf_out_dir/sample_file.txt --ploidy-file "$PLOIDY_FILE" $bcf_out_dir/"$NAME_PREFIX"_variants.bcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf
+
+        # Exclude variants with less than 30 depth, or where strand evidence is unbalanced
+        bcftools filter \
+            --exclude 'INFO/DP < 30' \
+            --exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) < 0.5' \
+            --exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) > 2.0' \
+            "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.filtered_dp30.vcf
 
 		#-c, --consensus-caller	
 		#-v, --variants-only
