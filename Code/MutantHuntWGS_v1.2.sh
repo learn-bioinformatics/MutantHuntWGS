@@ -94,10 +94,10 @@ if [ "$ALIGNMENT_AND_CALLING" = "YES" ]
 then
 	#Remove Old Output directory
 	rm -rf "$OUTPUT_FILE"
-
+	
 	#Make Output directory
 	mkdir "$OUTPUT_FILE"
-
+	
 	#make some directories
 	mkdir "$OUTPUT_FILE"/BAM
 	mkdir "$OUTPUT_FILE"/Alignment_Stats
@@ -106,8 +106,8 @@ then
 	mkdir "$OUTPUT_FILE"/VCFtools_Output
 	mkdir "$OUTPUT_FILE"/SNPeff_Output
 	mkdir "$OUTPUT_FILE"/SIFT_Output
-	bam_out_dir="$OUTPUT_FILE/BAM"
-	bcf_out_dir="$OUTPUT_FILE"/BCF
+    bam_out_dir="$OUTPUT_FILE/BAM"
+    bcf_out_dir="$OUTPUT_FILE"/BCF
 fi
 
 
@@ -118,7 +118,7 @@ fi
 if [ "$ALIGNMENT_AND_CALLING" = "YES" ]
 then
 
-	echo -e "\n\n\n\n\n\n"Running MutantHuntWGS
+	echo -e "\n\n\n\n\n\n"Running MutantHuntWGS 
 
 	###################################
 	###     MODULE 1: Alignment     ###
@@ -148,9 +148,7 @@ then
 
 			#Using this command to get only the file name and lose the path
 
-			NAME_PREFIX=`echo "$FASTQ_FILE" \
-				| awk -F "/" '{print $(NF)}'\
-				| awk -F "_" '{print  $1}'`
+			NAME_PREFIX=`echo "$FASTQ_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
             echo "Aligning $NAME_PREFIX"
 			bowtie2 --no-unal \
@@ -158,11 +156,10 @@ then
 				-k 1 \
 				-p "$CPUS" \
 				-x "$GENOME" \
-				-1 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R1.fastq.gz \
-				-2 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R2.fastq.gz \
+				-1 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R1.fastq.gz -2 "$FASTQ_DIRECTORY"/"$NAME_PREFIX"_R2.fastq.gz \
 				2> "$OUTPUT_FILE"/Alignment_Stats/"$NAME_PREFIX"_bowtie2.txt \
-				| samtools view -b -q 30 \
-				| samtools sort --threads $CPUS --write-index -o "$bam_out_dir/$NAME_PREFIX.bam##idx##$bam_out_dir/$NAME_PREFIX.bam.bai"
+                | samtools view -b -q 30 \
+                | samtools sort --threads $CPUS --write-index -o "$bam_out_dir/$NAME_PREFIX.bam##idx##$bam_out_dir/$NAME_PREFIX.bam.bai"
 
 			echo  -e Reads from "$FASTQ_DIRECTORY"/"$NAME_PREFIX"*.fastq.gz Mapped "\n"and stored in $bam_out_dir/"$NAME_PREFIX".bam"\n"
 
@@ -172,7 +169,7 @@ then
 	elif [ "$READ_TYPE" = "single" ]
 	then
 
-        #TODO: Unify code, simply setting different FASTQ input line to be incorporated later
+        #TODO: Unify code, simply setting different FASTQ input line to be incorporated later 
 
 		for FASTQ_FILE in `ls "$FASTQ_DIRECTORY"/*.fastq.gz`
 		do
@@ -207,7 +204,7 @@ then
 	else
 
 		echo "Failed to Identify Read Type Files"
-		exit
+        exit
 
 	fi
 
@@ -225,15 +222,15 @@ then
 		NAME_PREFIX=`echo "$BAM_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
 		#The first step is to use the SAMtools mpileup command to calculate the genotype likelihoods supported by the aligned reads in our sample
-
-		echo "Running pileup on $NAME_PREFIX"
+	
+        echo "Running pileup on $NAME_PREFIX"
 		bcftools mpileup \
-			--output-type b \
-			--fasta-ref "$GENOME_FASTA" \
-			--output $bcf_out_dir/"$NAME_PREFIX"_variants.bcf \
-			"$BAM_FILE" \
-			&> $bcf_out_dir/"$NAME_PREFIX"_mpileup.log # Capture standard error in a log
-
+            --output-type b \
+            --fasta-ref "$GENOME_FASTA" \
+            --output $bcf_out_dir/"$NAME_PREFIX"_variants.bcf \
+            "$BAM_FILE" \
+            &> $bcf_out_dir/"$NAME_PREFIX"_mpileup.log # Capture standard error in a log
+		
 		#--output-type b : directs SAMtools to output genotype likelihoods in the binary call format (BCF). This is a compressed binary format.
 		#A reference genome in FASTA format must be specified.
 
@@ -242,20 +239,20 @@ then
 
 		echo "$BAM_FILE" | awk '{print $1 "\t" "M"}' > $bcf_out_dir/sample_file.txt
 
-		echo "Running bcftools on $NAME_PREFIX"
+        echo "Running bcftools on $NAME_PREFIX"
 		bcftools call -c -v --samples-file $bcf_out_dir/sample_file.txt --ploidy-file "$PLOIDY_FILE" $bcf_out_dir/"$NAME_PREFIX"_variants.bcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf
 
-        # Exclude variants with less than 30 depth, or where strand evidence is unbalanced
-		bcftools filter \
-			--exclude 'INFO/DP < 30' \
-			--exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) < 0.5' \
-			--exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) > 2.0' \
-			"$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.filtered_dp30.vcf
+        ## Exclude variants with less than 30 depth, or where strand evidence is unbalanced
+        #bcftools filter \
+        #    --exclude 'INFO/DP < 30' \
+        #    --exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) < 0.5' \
+        #    --exclude '(DP4[0]+DP4[2])/(DP4[1]+DP4[3]+1) > 2.0' \
+        #    "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.filtered_dp30.vcf
 
-		#-c, --consensus-caller
+		#-c, --consensus-caller	
 		#-v, --variants-only
 
-
+		
 		echo -e Variants have been called and stored in "\n""$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf"\n"
 
 	done
@@ -280,20 +277,20 @@ then
 	#############################################
 
 	echo -e "\n\n\n\n\n\n"Comparing all strains to the "$WILD_TYPE" wild-type strain "\n"
-
-
+	
+	
 	##############################
 	#Implementing Payals Fix Here
-
+	
 	#Merge all vcf files with the mock_variant.tmp file
-	cat "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants.vcf $top_dir/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_merged.vcf
-
+	cat "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants.vcf /hpc-prj/cbds/software/MutantHuntWGS/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_merged.vcf
+		
 	#Create sorted vcf by catenating header in file and sort the non-header and append to the existing file
 	for d in "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_merged.vcf; do grep "^#" $d > $d.sorted; grep -v "^#" $d | sort -k1,1V -k2,2g >> $d.sorted; done
-
+		
 	#END Payals fix code
 	##############################
-
+		
 
 	#WILD_TYPE = the wild type file to compare all other files too
 
@@ -302,18 +299,18 @@ then
 
 		#Using this command to get only the file name and lose the path
 		MUTANT=`echo "$MUTANT_VCF" | awk -F "/" '{print $(NF)}' | awk -F "." '{print  $1}'`
-
-
-
+		
+		
+		
 		##############################
 		#Implementing Payals Fix Here
-
+		
 		#Merge all vcf files with the mock_variant.tmp file
-		cat "$OUTPUT_FILE"/VCF/"$MUTANT".vcf $top_dir/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$MUTANT"_merged.vcf
-
+		cat "$OUTPUT_FILE"/VCF/"$MUTANT".vcf /hpc-prj/cbds/software/MutantHuntWGS/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$MUTANT"_merged.vcf
+		
 		#Create sorted vcf by catenating header in file and sort the non-header and append to the existing file
 		for d in "$OUTPUT_FILE"/VCF/"$MUTANT"_merged.vcf; do grep "^#" $d > $d.sorted; grep -v "^#" $d | sort -k1,1V -k2,2g >> $d.sorted; done
-
+		
 		#END Payals fix code
 		##############################
 
@@ -357,16 +354,16 @@ then
 
 	#Remove unwanted directories
 	#rm -rf "$OUTPUT_FILE"/BCF
-	rm -rf "$OUTPUT_FILE"/VCFtools_Output
+	#rm -rf "$OUTPUT_FILE"/VCFtools_Output
 
 	#Remove unwanted files
-	rm "$OUTPUT_FILE"/BAM/*_unsorted.bam
-	rm "$OUTPUT_FILE"/VCF/*.tmp
-	rm `ls "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_filtered*.vcf`
-	rm "$OUTPUT_FILE"/VCF/*_merged.vcf
-	rm "$OUTPUT_FILE"/VCF/*_merged.vcf.sorted
-
-
+	#rm "$OUTPUT_FILE"/BAM/*_unsorted.bam
+	#rm "$OUTPUT_FILE"/VCF/*.tmp
+	#rm `ls "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_filtered*.vcf`
+	#rm "$OUTPUT_FILE"/VCF/*_merged.vcf
+	#rm "$OUTPUT_FILE"/VCF/*_merged.vcf.sorted
+	
+	
 
 	###########################################################
 	###   MODULE 4: Determine Variant Effects with SNPeff   ###
@@ -387,12 +384,12 @@ then
 		# Determine if VCF file contains variants
 		if [ `grep -v "^#" "$VCF_FILE" | wc -l` = 0 ]
 		then
-
+	
 			# Print Error Message
 			echo -e ERROR: Unable to Run SNPeff because there are no variants in: "\n" "$VCF_NAME"
 
 		else
-
+		
 			#Make directory
 			mkdir "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"
 
@@ -404,43 +401,45 @@ then
 			snpEff ann -v Saccharomyces_cerevisiae "$VCF_FILE" > "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"/SNPeff_Annotations.vcf
 
 		fi
-
+	
 	done
 
-    #echo "Not running SIFT because instructions are missing (but we might figure it out later)"
-
-	#################################################################
-	###   MODULE 5: Predict Variant Impact on Protein with SIFT   ###
-	#################################################################
-
-	echo -e "\n\n\n\n\n\n"Running SIFT  "\n"
-
-	for VCF_FILE in `ls "$OUTPUT_FILE"/VCF/*_filtered_and_scored.vcf`
-	do
-
-		#Using this command to get only the file name and lose the path
-		VCF_NAME=`echo "$VCF_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
-
-		# Determine if VCF file contains variants
-		if [ `grep -v "^#" "$VCF_FILE" | wc -l` = 0 ]
-		then
-
-			echo -e ERROR: Unable to Run SIFT because there are no variants in: "\n" "$VCF_NAME"
-
-		else
-
-			##Run SIFT
-			java -Xmx4G -jar $script_dir/SIFT4G_Annotator.jar -c -i "$VCF_FILE"  -d /Main/EF4.74 -r "$OUTPUT_FILE"/SIFT_Output/"$VCF_NAME"
 
 
-		fi
+    echo "Not running SIFT because instructions are missing (but we might figure it out later)"
 
-	done
+	# #################################################################
+	# ###   MODULE 5: Predict Variant Impact on Protein with SIFT   ###
+	# #################################################################
+
+	# echo -e "\n\n\n\n\n\n"Running SIFT  "\n"
+
+	# for VCF_FILE in `ls "$OUTPUT_FILE"/VCF/*_filtered_and_scored.vcf`
+	# do
+
+	# 	#Using this command to get only the file name and lose the path
+	# 	VCF_NAME=`echo "$VCF_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
+
+	# 	# Determine if VCF file contains variants
+	# 	if [ `grep -v "^#" "$VCF_FILE" | wc -l` = 0 ]
+	# 	then
+
+	# 		echo -e ERROR: Unable to Run SIFT because there are no variants in: "\n" "$VCF_NAME"
+
+	# 	else
+	# 
+	# 		##Run SIFT
+	# 		java -Xmx4G -jar $script_dir/SIFT4G_Annotator.jar -c -i "$VCF_FILE"  -d /Main/EF4.74 -r "$OUTPUT_FILE"/SIFT_Output/"$VCF_NAME"
+	# 
+	# 
+	# 	fi
+
+	# done
 
 	echo -e "\n\n\n\n\n\n" Run Completed "\n\n\n\n"
 
 	exit
 
-else
+else 
 	exit
 fi
