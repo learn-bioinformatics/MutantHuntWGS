@@ -230,7 +230,7 @@ then
 
         echo "Running pileup on $NAME_PREFIX"
 		bcftools mpileup \
-            --threads $SLUM_CPUS_PER_TASK \
+            --threads 32 \
             --output-type b \
             --fasta-ref "$GENOME_FASTA" \
             --output $bcf_out_dir/"$NAME_PREFIX"_variants.bcf \
@@ -247,7 +247,7 @@ then
 
         echo "Running bcftools on $NAME_PREFIX"
 		bcftools call \
-            --threads $SLUM_CPUS_PER_TASK \
+            --threads 32 \
             -c \
             -v \
             --samples-file $bcf_out_dir/sample_file.txt \
@@ -417,8 +417,6 @@ then
 	done
 
 
-
-    echo "Not running SIFT because instructions are missing (but we might figure it out later)"
 
 	#################################################################
 	###   MODULE 5: Predict Variant Impact on Protein with SIFT   ###
