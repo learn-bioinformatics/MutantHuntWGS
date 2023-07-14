@@ -20,7 +20,7 @@ script_dir=$( dirname $0 )
 
 #Enable user input
 
-while getopts n:g:f:r:s:p:d:o:a:t: option
+while getopts n:g:f:r:s:S:d:o:a:t: option
 do
 case "${option}"
 in
@@ -30,7 +30,6 @@ f) GENOME_FASTA=${OPTARG};;
 r) READ_TYPE=${OPTARG};;
 s) SCORE=${OPTARG};;
 S) SNPEFF_GENOME=${OPTARG};;
-#m) CHROM_MAP_FILE=${OPTARG};;
 #p) PLOIDY_FILE=${OPTARG};;
 d) FASTQ_DIRECTORY=${OPTARG};;
 o) OUTPUT_FILE=${OPTARG};;
