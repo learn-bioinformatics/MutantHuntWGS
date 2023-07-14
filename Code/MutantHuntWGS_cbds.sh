@@ -180,7 +180,7 @@ then
 			##Align reads
 
 			#Using this command to get only the file name and lose the path
-
+            # NAME_PREFIX is the part of file before first underscore in FASTQ file name
 			NAME_PREFIX=`echo "$FASTQ_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
             echo "Aligning $NAME_PREFIX"
