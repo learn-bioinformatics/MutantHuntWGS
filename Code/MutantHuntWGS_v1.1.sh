@@ -219,13 +219,12 @@ then
 		#Using this command to get only the file name and lose the path
 		NAME_PREFIX=`echo "$BAM_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
-		#The first step is to use the SAMtools mpileup command to calculate the genotype likelihoods supported by the aligned reads in our sample
+		#The first step is to use the bcftools mpileup command to calculate the genotype likelihoods supported by the aligned reads in our sample
 	
 
-		samtools mpileup -g -f "$GENOME_FASTA" "$BAM_FILE" -o "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf &> /dev/null
+		bcftools mpileup -f "$GENOME_FASTA" "$BAM_FILE" -o "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf &> /dev/null
 
-		#-g: directs SAMtools to output genotype likelihoods in the binary call format (BCF). This is a compressed binary format.
-		#-f: directs SAMtools to use the specified reference genome. A reference genome must be specified.
+		#-f: directs bcftools to use the specified reference genome. A reference genome must be specified.
 
 		#The second step is to use bcftools:
 		#The bcftools call command uses the genotype likelihoods generated from the previous step to call SNPs and indels, and outputs the all identified variants in the variant call format (VFC), the file format created for the 1000 Genomes Project, and now widely used to represent genomic variants.
