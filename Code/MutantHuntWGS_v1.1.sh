@@ -155,11 +155,11 @@ then
 
 			##Sort BAM with Samtools
 
-			samtools sort "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_unsorted.bam -o "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
+			samtools sort --threads "$CPUS" "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_unsorted.bam -o "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
 
 			##Index BAM with Samtools
 
-			samtools index "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
+			samtools index --threads "$CPUS" "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
 
 			echo  -e Reads from "$FASTQ_DIRECTORY"/"$NAME_PREFIX"*.fastq.gz Mapped "\n"and stored in "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam"\n"
 
@@ -190,11 +190,11 @@ then
 
 			##Sort BAM with Samtools
 
-			samtools sort "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_unsorted.bam -o "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
+			samtools sort --threads "$CPUS" "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_unsorted.bam -o "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
 
 			##Index BAM with Samtools
 
-			samtools index "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
+			samtools index --threads "$CPUS" "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam
 
 			echo -e Reads from "$FASTQ_DIRECTORY"/"$NAME_PREFIX"*.fastq.gz mapped"\n"and stored in "$OUTPUT_FILE"/BAM/"$NAME_PREFIX"_sorted.bam"\n"
 
