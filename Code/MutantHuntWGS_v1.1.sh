@@ -112,7 +112,7 @@ fi
 if [ "$ALIGNMENT_AND_CALLING" = "YES" ]
 then
 
-	echo -e "\n\n\n\n\n\n"Running MutantHuntWGS 
+	echo -e "\n\n\n\n\n\n"Running MutantHuntWGS
 
 	###################################
 	###     MODULE 1: Alignment     ###
@@ -220,7 +220,6 @@ then
 		NAME_PREFIX=`echo "$BAM_FILE" | awk -F "/" '{print $(NF)}' | awk -F "_" '{print  $1}'`
 
 		#The first step is to use the bcftools mpileup command to calculate the genotype likelihoods supported by the aligned reads in our sample
-	
 
 		bcftools mpileup -f "$GENOME_FASTA" "$BAM_FILE" -o "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf &> /dev/null
 
@@ -382,7 +381,7 @@ then
 
 			#Use SNPeff to find out some more information about these SNPs like the amino acid change in the resulting protein
 
-			java -Xmx4G -jar /Main/snpEff/snpEff.jar ann -v Saccharomyces_cerevisiae "$VCF_FILE" > "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"/SNPeff_Annotations.vcf
+			snpEff ann -v Saccharomyces_cerevisiae "$VCF_FILE" > "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"/SNPeff_Annotations.vcf
 
 		fi
 
