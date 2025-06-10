@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #MutantHunter script by Mitch Ellison
+#Edits by Hoa Chuongh and Christopher Bottoms
 
 
 #Enable user input
@@ -88,10 +89,10 @@ if [ "$ALIGNMENT_AND_CALLING" = "YES" ]
 then
 	#Remove Old Output directory
 	rm -rf "$OUTPUT_FILE"
-	
+
 	#Make Output directory
 	mkdir "$OUTPUT_FILE"
-	
+
 	#make some directories
 	mkdir "$OUTPUT_FILE"/BAM
 	mkdir "$OUTPUT_FILE"/Alignment_Stats
@@ -222,7 +223,7 @@ then
 	
 
 		samtools mpileup -g -f "$GENOME_FASTA" "$BAM_FILE" -o "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf &> /dev/null
-		
+
 		#-g: directs SAMtools to output genotype likelihoods in the binary call format (BCF). This is a compressed binary format.
 		#-f: directs SAMtools to use the specified reference genome. A reference genome must be specified.
 
@@ -233,10 +234,10 @@ then
 
 		bcftools call -c -v --samples-file "$OUTPUT_FILE"/BCF/sample_file.txt --ploidy-file "$PLOIDY_FILE" "$OUTPUT_FILE"/BCF/"$NAME_PREFIX"_variants.bcf > "$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf
 
-		#-c, --consensus-caller	
+		#-c, --consensus-caller
 		#-v, --variants-only
 
-		
+
 		echo -e Variants have been called and stored in "\n""$OUTPUT_FILE"/VCF/"$NAME_PREFIX"_variants.vcf"\n"
 
 	done
@@ -261,20 +262,20 @@ then
 	#############################################
 
 	echo -e "\n\n\n\n\n\n"Comparing all strains to the "$WILD_TYPE" wild-type strain "\n"
-	
-	
+
+
 	##############################
 	#Implementing Payals Fix Here
-	
+
 	#Merge all vcf files with the mock_variant.tmp file
 	cat "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants.vcf /Main/MutantHuntWGS/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_merged.vcf
-		
+
 	#Create sorted vcf by catenating header in file and sort the non-header and append to the existing file
 	for d in "$OUTPUT_FILE"/VCF/"$WILD_TYPE"_variants_merged.vcf; do grep "^#" $d > $d.sorted; grep -v "^#" $d | sort -k1,1V -k2,2g >> $d.sorted; done
-		
+
 	#END Payals fix code
 	##############################
-		
+
 
 	#WILD_TYPE = the wild type file to compare all other files too
 
@@ -283,18 +284,18 @@ then
 
 		#Using this command to get only the file name and lose the path
 		MUTANT=`echo "$MUTANT_VCF" | awk -F "/" '{print $(NF)}' | awk -F "." '{print  $1}'`
-		
-		
-		
+
+
+
 		##############################
 		#Implementing Payals Fix Here
-		
+
 		#Merge all vcf files with the mock_variant.tmp file
 		cat "$OUTPUT_FILE"/VCF/"$MUTANT".vcf /Main/MutantHuntWGS/S_cerevisiae_Bowtie2_Index_and_FASTA/mock_variant.tsv > "$OUTPUT_FILE"/VCF/"$MUTANT"_merged.vcf
-		
+
 		#Create sorted vcf by catenating header in file and sort the non-header and append to the existing file
 		for d in "$OUTPUT_FILE"/VCF/"$MUTANT"_merged.vcf; do grep "^#" $d > $d.sorted; grep -v "^#" $d | sort -k1,1V -k2,2g >> $d.sorted; done
-		
+
 		#END Payals fix code
 		##############################
 
@@ -368,12 +369,12 @@ then
 		# Determine if VCF file contains variants
 		if [ `grep -v "^#" "$VCF_FILE" | wc -l` = 0 ]
 		then
-	
+
 			# Print Error Message
 			echo -e ERROR: Unable to Run SNPeff because there are no variants in: "\n" "$VCF_NAME"
 
 		else
-		
+
 			#Make directory
 			mkdir "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"
 
@@ -385,7 +386,7 @@ then
 			java -Xmx4G -jar /Main/snpEff/snpEff.jar ann -v Saccharomyces_cerevisiae "$VCF_FILE" > "$OUTPUT_FILE"/SNPeff_Output/"$VCF_NAME"/SNPeff_Annotations.vcf
 
 		fi
-	
+
 	done
 
 
@@ -410,11 +411,11 @@ then
 			echo -e ERROR: Unable to Run SIFT because there are no variants in: "\n" "$VCF_NAME"
 
 		else
-	
+
 			##Run SIFT
 			java -Xmx4G -jar /Main/SIFT4G_Annotator.jar -c -i "$VCF_FILE"  -d /Main/EF4.74 -r "$OUTPUT_FILE"/SIFT_Output/"$VCF_NAME"
-	
-	
+
+
 		fi
 
 	done
@@ -423,6 +424,6 @@ then
 
 	exit
 
-else 
+else
 	exit
 fi
